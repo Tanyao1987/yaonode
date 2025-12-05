@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>未来科技 - 创新驱动，连接世界</title>
     <style>
-        /* CSS 样式 */
+        /* CSS 样式 - 保持简洁现代风格 */
         body {
             font-family: 'Arial', 'Microsoft YaHei', sans-serif;
             margin: 0;
@@ -125,7 +125,8 @@
         <p id="visitorInfo">
             您是本站的第 <span id="visitorCount">加载中...</span> 位访客
         </p>
-        </header>
+        
+    </header>
 
     <div class="container">
         
@@ -174,22 +175,26 @@
 
     <script>
         function fetchVisitorCount() {
-            // 您提供的 CountAPI V2 URL，包含递增操作 (/up)
+            // 使用您提供的 CountAPI V2 URL
             const apiUrl = 'https://api.counterapi.dev/v2/s-team-7-1986/HuggingFace111/up';
 
             fetch(apiUrl)
                 .then(response => {
+                    // 检查网络响应是否成功
                     if (!response.ok) {
                         throw new Error('网络响应错误，状态码: ' + response.status);
                     }
                     return response.json(); 
                 })
                 .then(data => {
-                    // data.value 是递增后的最新计数
+                    // *** 关键修复：从 data.data.up_count 中提取值 ***
+                    const currentCount = data && data.data ? data.data.up_count : undefined;
+                    
                     const visitorCountElement = document.getElementById('visitorCount');
-                    if (data && data.value !== undefined && visitorCountElement) {
-                        // 更新页面上的数字，并格式化数字（如 1,000）
-                        visitorCountElement.textContent = data.value.toLocaleString();
+                    
+                    if (currentCount !== undefined && visitorCountElement) {
+                        // 更新页面上的数字，并格式化数字
+                        visitorCountElement.textContent = currentCount.toLocaleString();
                     } else {
                         if (visitorCountElement) visitorCountElement.textContent = '计数失败';
                     }
@@ -201,8 +206,8 @@
                 });
         }
 
-        // 页面加载完成后，自动执行获取计数器的函数
+        // 页面加载完成后，执行获取计数器的函数
         window.onload = fetchVisitorCount;
     </script>
-    </body>
+</body>
 </html>
