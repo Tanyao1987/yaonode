@@ -33,6 +33,18 @@
             font-size: 1.1em;
             opacity: 0.9;
         }
+        
+        /* 访客计数样式 */
+        #visitorInfo {
+            margin-top: 10px;
+            font-size: 1em;
+            opacity: 0.9;
+        }
+        #visitorCount {
+            color: #ffc107; /* 黄色，用于突出数字 */
+            font-weight: bold;
+            font-size: 1.2em; /* 稍微放大数字 */
+        }
 
         .container {
             width: 80%;
@@ -109,7 +121,11 @@
     <header>
         <h1>🚀 极光数字科技</h1>
         <p>Innovation-Driven, World-Connected. 创新驱动，连接世界。</p>
-    </header>
+        
+        <p id="visitorInfo">
+            您是本站的第 <span id="visitorCount">加载中...</span> 位访客
+        </p>
+        </header>
 
     <div class="container">
         
@@ -156,5 +172,37 @@
         <p>&copy; 2025 极光数字科技. 保留所有权利。</p>
     </footer>
 
-</body>
+    <script>
+        function fetchVisitorCount() {
+            // 您提供的 CountAPI V2 URL，包含递增操作 (/up)
+            const apiUrl = 'https://api.counterapi.dev/v2/s-team-7-1986/HuggingFace111/up';
+
+            fetch(apiUrl)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应错误，状态码: ' + response.status);
+                    }
+                    return response.json(); 
+                })
+                .then(data => {
+                    // data.value 是递增后的最新计数
+                    const visitorCountElement = document.getElementById('visitorCount');
+                    if (data && data.value !== undefined && visitorCountElement) {
+                        // 更新页面上的数字，并格式化数字（如 1,000）
+                        visitorCountElement.textContent = data.value.toLocaleString();
+                    } else {
+                        if (visitorCountElement) visitorCountElement.textContent = '计数失败';
+                    }
+                })
+                .catch(error => {
+                    console.error('获取计数时发生错误:', error);
+                    const visitorCountElement = document.getElementById('visitorCount');
+                    if (visitorCountElement) visitorCountElement.textContent = '加载错误';
+                });
+        }
+
+        // 页面加载完成后，自动执行获取计数器的函数
+        window.onload = fetchVisitorCount;
+    </script>
+    </body>
 </html>
