@@ -79,9 +79,9 @@ const httpServer = http.createServer((req, res) => {
       .catch(err => {
 
         const vlessURL =
-          `vless://${UUID}@${DOMAIN}:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${NAME}-${ISP}`;
+          `vless://${UUID}@$cdns.doon.eu.org:443:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${NAME}-${ISP}`;
         const trojanURL =
-          `trojan://${UUID}@${DOMAIN}:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${NAME}-${ISP}`;
+          `trojan://${UUID}@$cdns.doon.eu.org:443:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${NAME}-${ISP}`;
 
         const subscription = vlessURL + '\n' + trojanURL;
         const base64Content = Buffer.from(subscription).toString('base64');
