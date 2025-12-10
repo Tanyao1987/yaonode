@@ -13,11 +13,11 @@ const NEZHA_SERVER = process.env.NEZHA_SERVER || '';       // 哪吒v1填写形�
 const NEZHA_PORT = process.env.NEZHA_PORT || '';           // 哪吒v1没有此变量，v0的agent端口为{443,8443,2096,2087,2083,2053}其中之一时开启tls
 const NEZHA_KEY = process.env.NEZHA_KEY || '';             // v1的NZ_CLIENT_SECRET或v0的agent端口                
 const DOMAIN = process.env.DOMAIN || '1234.abc.com';       // 填写项目域名或已反代的域名，不带前缀，建议填已反代的域名
-const AUTO_ACCESS = process.env.AUTO_ACCESS || false;      // 是否开启自动访问保活,false为关闭,true为开启,需同时填写DOMAIN变量
+const AUTO_ACCESS = process.env.AUTO_ACCESS || true;       // 是否开启自动访问保活,false为关闭,true为开启,需同时填写DOMAIN变量
 const WSPATH = process.env.WSPATH || UUID.slice(0, 8);     // 节点路径，默认获取uuid前8位
 const SUB_PATH = process.env.SUB_PATH || 'sub';            // 获取节点的订阅路径
-const NAME = process.env.NAME || '';                       // 节点名称
-const PORT = process.env.PORT || 3000;                     // http和ws服务端口
+const NAME = process.env.NAME || 'Hug';                    // 节点名称
+const PORT = process.env.PORT || 7860;                     // http和ws服务端口
 
 let ISP = '';
 const GetISP = async () => {
@@ -44,15 +44,52 @@ const httpServer = http.createServer((req, res) => {
       res.end(content);
     });
     return;
+
   } else if (req.url === `/${SUB_PATH}`) {
-    const namePart = NAME ? `${NAME}-${ISP}` : ISP;
-    const vlessURL = `vless://${UUID}@cdns.doon.eu.org:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
-    const trojanURL = `trojan://${UUID}@cdns.doon.eu.org:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${namePart}`;
-    const subscription = vlessURL + '\n' + trojanURL;
-    const base64Content = Buffer.from(subscription).toString('base64');
-    
-    res.writeHead(200, { 'Content-Type': 'text/plain' });
-    res.end(base64Content + '\n');
+
+    // ========================== 新增：远程域名列表 ==========================
+    const DOMAIN_LIST_URL = "https://你的域名列表.txt";
+
+    axios.get(DOMAIN_LIST_URL)
+      .then(r => {
+        let domains = r.data
+          .split(/\r?\n/)
+          .map(l => l.trim())
+          .filter(l => l.length > 0);
+
+        if (domains.length === 0) {
+          domains = [DOMAIN]; 
+        }
+
+        let output = "";
+
+        for (const d of domains) {
+          const vlessURL =
+            `vless://${UUID}@${d}:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${NAME}-${d}`;
+          const trojanURL =
+            `trojan://${UUID}@${d}:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${NAME}-${d}`;
+
+          output += vlessURL + "\n" + trojanURL + "\n";
+        }
+
+        const base64Content = Buffer.from(output).toString('base64');
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end(base64Content + "\n");
+      })
+      .catch(err => {
+
+        const vlessURL =
+          `vless://${UUID}@${DOMAIN}:443?encryption=none&security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${NAME}-${ISP}`;
+        const trojanURL =
+          `trojan://${UUID}@${DOMAIN}:443?security=tls&sni=${DOMAIN}&fp=chrome&type=ws&host=${DOMAIN}&path=%2F${WSPATH}#${NAME}-${ISP}`;
+
+        const subscription = vlessURL + '\n' + trojanURL;
+        const base64Content = Buffer.from(subscription).toString('base64');
+
+        res.writeHead(200, { "Content-Type": "text/plain" });
+        res.end(base64Content + "\n");
+      });
+
   } else {
     res.writeHead(404, { 'Content-Type': 'text/plain' });
     res.end('Not Found\n');
@@ -109,7 +146,6 @@ function handleVlessConnection(ws, msg) {
   const [VERSION] = msg;
   const id = msg.slice(1, 17);
   if (!id.every((v, i) => v == parseInt(uuid.substr(i * 2, 2), 16))) return false;
-  
   let i = msg.slice(17, 18).readUInt8() + 19;
   const port = msg.slice(i, i += 2).readUInt16BE(0);
   const ATYP = msg.slice(i, i += 1).readUInt8();
@@ -347,7 +383,7 @@ async function addAccessTask() {
   if (!DOMAIN) {
     return;
   }
-  const fullURL = `https://${DOMAIN}/${SUB_PATH}`;
+  const fullURL = `https://${DOMAIN}`;
   try {
     const res = await axios.post("https://oooo.serv00.net/add-url", {
       url: fullURL
